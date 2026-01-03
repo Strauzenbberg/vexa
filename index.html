@@ -2,120 +2,110 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXA // Final Stable</title>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.umd.js"></script>
+    <title>VEXA // Final Test</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .box { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #222; width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .btn { background: #fff; color: #000; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        #log { background: #000; color: #00ff00; padding: 10px; font-family: monospace; font-size: 11px; height: 120px; overflow-y: auto; margin-top: 20px; border-radius: 5px; border: 1px solid #333; }
-        input { margin-bottom: 10px; width: 100%; color: #888; }
+        body { background: #050505; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 40px; }
+        .box { background: #111; padding: 30px; border-radius: 15px; border: 1px solid #222; width: 100%; max-width: 400px; }
+        .btn { background: #007AFF; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn:disabled { background: #333; cursor: not-allowed; }
+        #log { background: #000; color: #00ff00; padding: 10px; font-family: monospace; font-size: 11px; height: 150px; overflow-y: auto; margin-top: 20px; border: 1px solid #333; }
+        input { margin-bottom: 15px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h2 style="margin-top:0">VEXA <span style="color:#007AFF">V2</span></h2>
-    <p style="font-size: 13px; color: #666;">Engenharia de Memória Otimizada</p>
-    
-    <label style="font-size:12px">Imagens (Mesmo nome do áudio)</label>
-    <input type="file" id="f-img" multiple>
-    
-    <label style="font-size:12px">Áudios (MP3)</label>
-    <input type="file" id="f-aud" multiple>
-    
-    <button id="run-btn" class="btn">PRODUZIR VÍDEOS</button>
-    
-    <div id="log">Aguardando comando...</div>
+    <h2>VEXA <span style="color:#007AFF">V3</span></h2>
+    <input type="file" id="f-img" multiple accept="image/*">
+    <input type="file" id="f-aud" multiple accept="audio/*">
+    <button id="run-btn" class="btn">INICIAR AGORA</button>
+    <div id="log">Aguardando...</div>
 </div>
 
 <script>
+    // Referências globais corretas para UMD
     const { FFmpeg } = window.FFmpeg;
     const { fetchFile, toBlobURL } = window.FFmpegUtil;
     
-    let ffmpeg = null;
+    let ffmpeg = new FFmpeg();
     let imgs = {}, auds = {}, results = [];
 
-    const logger = (m) => {
+    const log = (m) => {
         const d = document.getElementById('log');
         d.innerHTML += `<div>> ${m}</div>`;
         d.scrollTop = d.scrollHeight;
     };
 
-    document.getElementById('f-img').onchange = e => { for(let f of e.target.files) imgs[f.name.split('.')[0]] = f; logger("Imagens lidas."); };
-    document.getElementById('f-aud').onchange = e => { for(let f of e.target.files) auds[f.name.split('.')[0]] = f; logger("Áudios lidos."); };
+    // Tenta carregar o motor assim que a página abre
+    async function initFFmpeg() {
+        try {
+            log("Iniciando motor...");
+            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+            });
+            log("Motor carregado com sucesso!");
+        } catch (e) {
+            log("ERRO AO CARREGAR: " + e.message);
+        }
+    }
+
+    initFFmpeg();
+
+    document.getElementById('f-img').onchange = e => { for(let f of e.target.files) imgs[f.name.split('.')[0]] = f; log("Fotos ok."); };
+    document.getElementById('f-aud').onchange = e => { for(let f of e.target.files) auds[f.name.split('.')[0]] = f; log("Áudios ok."); };
 
     document.getElementById('run-btn').onclick = async () => {
         const btn = document.getElementById('run-btn');
         btn.disabled = true;
         
-        try {
-            if (!ffmpeg) {
-                logger("Carregando motor leve...");
-                ffmpeg = new FFmpeg();
-                
-                // Carregamento modular para evitar estouro de RAM
-                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-                await ffmpeg.load({
-                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-                });
-            }
+        const pairs = Object.keys(auds).filter(n => imgs[n]);
+        if(pairs.length === 0) {
+            log("Erro: Nenhum par (foto/áudio) encontrado.");
+            btn.disabled = false;
+            return;
+        }
 
-            const pairs = Object.keys(auds).filter(n => imgs[n]);
-            logger(`Pares: ${pairs.length}`);
+        for (const n of pairs) {
+            try {
+                log(`Processando: ${n}`);
+                await ffmpeg.writeFile('img', await fetchFile(imgs[n]));
+                await ffmpeg.writeFile('aud', await fetchFile(auds[n]));
 
-            for (const n of pairs) {
-                logger(`Renderizando: ${n}...`);
-                
-                await ffmpeg.writeFile('in_img', await fetchFile(imgs[n]));
-                await ffmpeg.writeFile('in_aud', await fetchFile(auds[n]));
-
-                // Comando focado em compatibilidade e economia de RAM
                 await ffmpeg.exec([
-                    '-loop', '1', 
-                    '-i', 'in_img', 
-                    '-i', 'in_aud',
-                    '-c:v', 'libx264',
-                    '-preset', 'ultrafast',
-                    '-tune', 'stillimage',
+                    '-loop', '1', '-i', 'img', '-i', 'aud',
+                    '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'stillimage',
                     '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p',
-                    '-c:a', 'aac',
-                    '-b:a', '128k',
-                    '-shortest',
-                    'out.mp4'
+                    '-c:a', 'aac', '-shortest', 'out.mp4'
                 ]);
 
                 const data = await ffmpeg.readFile('out.mp4');
                 results.push({ name: `${n}.mp4`, data });
                 
-                // Limpeza imediata da memória virtual
-                await ffmpeg.deleteFile('in_img');
-                await ffmpeg.deleteFile('in_aud');
+                // Limpeza de memória imediata
+                await ffmpeg.deleteFile('img');
+                await ffmpeg.deleteFile('aud');
                 await ffmpeg.deleteFile('out.mp4');
-                
-                logger(`Sucesso: ${n}`);
+                log(`✅ ${n} pronto.`);
+            } catch (err) {
+                log(`Erro em ${n}: ` + err.message);
             }
-
-            logger("Criando ZIP...");
-            const zip = new JSZip();
-            results.forEach(r => zip.file(r.name, r.data));
-            const blob = await zip.generateAsync({type:"blob"});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "vexa_output.zip";
-            a.click();
-            logger("Download pronto!");
-
-        } catch (err) {
-            logger(`ERRO: ${err.message}`);
-            console.error(err);
-        } finally {
-            btn.disabled = false;
         }
+
+        log("Criando download...");
+        const zip = new JSZip();
+        results.forEach(r => zip.file(r.name, r.data));
+        const blob = await zip.generateAsync({type:"blob"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "vexa_videos.zip";
+        a.click();
+        log("Pronto!");
+        btn.disabled = false;
     };
 </script>
 </body>
