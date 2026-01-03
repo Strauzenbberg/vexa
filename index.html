@@ -2,83 +2,139 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>VEXA // Native Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEXA // Native Engine MP4</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
-        .box { background: #111; border: 1px solid #333; padding: 25px; border-radius: 15px; display: inline-block; width: 350px; }
-        button { background: #007AFF; color: #fff; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px; }
-        #log { margin-top: 20px; color: #0f0; font-family: monospace; text-align: left; background: #000; padding: 15px; height: 160px; overflow-y: auto; font-size: 11px; }
+        :root { --primary: #007AFF; --bg: #050505; --card: #111; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .box { background: var(--card); border: 1px solid #333; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; font-weight: 800; letter-spacing: -1px; }
+        input[type="file"] { background: #222; width: 100%; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444; color: #888; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 18px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        button:hover { background: #0056b3; transform: translateY(-2px); }
+        button:disabled { background: #333; cursor: not-allowed; transform: none; }
+        #log { margin-top: 20px; color: #00ff00; font-family: 'Courier New', monospace; text-align: left; background: #000; padding: 15px; border: 1px solid #222; height: 150px; overflow-y: auto; border-radius: 10px; font-size: 12px; line-height: 1.5; }
         canvas { display: none; }
+        .footer { margin-top: 20px; font-size: 11px; color: #555; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>VEXA <span style="color:#007AFF">NATIVE</span></h2>
-    <p style="font-size: 11px; color: #888;">Renderização via MediaStream (Sem erro de RAM)</p>
-    <input type="file" id="f-img" accept="image/*"><br><br>
-    <input type="file" id="f-aud" accept="audio/*">
-    <button id="btn-run">GERAR VÍDEO</button>
+<div class="container">
+    <div class="box">
+        <h2>VEXA <span style="color:var(--primary)">NATIVE</span></h2>
+        <p style="font-size: 13px; color: #888; margin-bottom: 25px;">Processamento via MediaStream API</p>
+        
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px; color:#aaa;">Imagem de Fundo</label>
+        <input type="file" id="f-img" accept="image/*">
+        
+        <label style="display:block; text-align:left; font-size:12px; margin-bottom:5px; color:#aaa;">Arquivo de Áudio</label>
+        <input type="file" id="f-aud" accept="audio/*">
+        
+        <button id="btn-run">GERAR VÍDEO MP4</button>
+    </div>
+
+    <div id="log">Aguardando arquivos para iniciar...</div>
+    <div class="footer">O vídeo será baixado automaticamente ao fim do áudio.</div>
 </div>
 
-<div id="log">> Aguardando arquivos...</div>
 <canvas id="canvas" width="1280" height="720"></canvas>
 
 <script>
-    const log = (m) => { document.getElementById('log').innerHTML += `<div>> ${m}</div>`; };
+    const logDiv = document.getElementById('log');
+    const btn = document.getElementById('btn-run');
+    
+    const writeLog = (msg) => {
+        logDiv.innerHTML += `<div>> ${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    };
 
-    document.getElementById('btn-run').onclick = async () => {
+    btn.onclick = async () => {
         const imgFile = document.getElementById('f-img').files[0];
         const audFile = document.getElementById('f-aud').files[0];
 
-        if (!imgFile || !audFile) return log("Selecione os arquivos!");
+        if (!imgFile || !audFile) {
+            alert("Por favor, selecione tanto a imagem quanto o áudio.");
+            return;
+        }
 
-        log("Iniciando render nativo...");
+        btn.disabled = true;
+        writeLog("Iniciando motor nativo...");
 
-        // 1. Carregar Áudio e Imagem
-        const audio = new Audio(URL.createObjectURL(audFile));
-        const img = new Image();
-        img.src = URL.createObjectURL(imgFile);
+        try {
+            // 1. Preparar Áudio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audio = new Audio(URL.createObjectURL(audFile));
+            const source = audioContext.createMediaElementSource(audio);
+            const destination = audioContext.createMediaStreamDestination();
+            source.connect(destination);
+            source.connect(audioContext.destination);
 
-        await new Promise(r => img.onload = r);
-        log("Recursos carregados.");
+            // 2. Preparar Imagem no Canvas
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.src = URL.createObjectURL(imgFile);
 
-        // 2. Configurar Canvas
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Desenhar imagem no canvas
-        ctx.drawImage(img, 0, 0, 1280, 720);
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+            
+            // Desenhar imagem redimensionada (Cobre o fundo 720p)
+            ctx.drawImage(img, 0, 0, 1280, 720);
+            writeLog("Cena renderizada.");
 
-        // 3. Capturar Stream e Gravar
-        const stream = canvas.captureStream(1); // 1 FPS para economizar
-        const audioStream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
-        
-        const combined = new MediaStream([...stream.getTracks(), ...audioStream.getAudioTracks()]);
-        const recorder = new MediaRecorder(combined, { mimeType: 'video/webm;codecs=vp8', bitsPerSecond: 2500000 });
-        
-        const chunks = [];
-        recorder.ondataavailable = e => chunks.push(e.data);
-        recorder.onstop = () => {
-            const blob = new Blob(chunks, { type: 'video/webm' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "video_vexa.webm";
-            a.click();
-            log("✅ Vídeo gerado com sucesso!");
-        };
+            // 3. Capturar Streams
+            const canvasStream = canvas.captureStream(30); // 30 FPS para suavidade
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...destination.stream.getAudioTracks()
+            ]);
 
-        // 4. Iniciar Processo
-        recorder.start();
-        audio.play();
-        log("Gravando áudio... (Aguarde o fim da música)");
+            // 4. Configurar Gravador (Tentativa MP4)
+            let options = { mimeType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"', bitsPerSecond: 5000000 };
+            
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                writeLog("MP4 não suportado no navegador. Usando WebM...");
+                options = { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: 5000000 };
+            }
 
-        audio.onended = () => {
-            recorder.stop();
-            log("Finalizando arquivo...");
-        };
+            const recorder = new MediaRecorder(combinedStream, options);
+            const chunks = [];
+
+            recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            
+            recorder.onstop = () => {
+                const isMP4 = options.mimeType.includes('mp4');
+                const blob = new Blob(chunks, { type: options.mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vexa_video_${Date.now()}.${isMP4 ? 'mp4' : 'webm'}`;
+                a.click();
+                writeLog("✅ Processo concluído com sucesso!");
+                btn.disabled = false;
+            };
+
+            // 5. Iniciar Gravação
+            recorder.start();
+            audio.play();
+            writeLog("Gravando áudio e vídeo em tempo real...");
+            writeLog("Não feche esta aba até o final.");
+
+            audio.onended = () => {
+                recorder.stop();
+                writeLog("Finalizando arquivo e gerando download...");
+            };
+
+        } catch (err) {
+            writeLog("ERRO: " + err.message);
+            btn.disabled = false;
+        }
     };
 </script>
+
 </body>
 </html>
