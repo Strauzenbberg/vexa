@@ -3,130 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXA // Universal Engine</title>
-    
+    <title>VEXA // Light Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
     <style>
-        :root { --primary: #007AFF; --bg: #0a0a0c; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        input[type="file"] { margin: 10px 0; display: block; width: 100%; }
-        .btn { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn:disabled { opacity: 0.3; }
-        #log { font-size: 12px; color: #888; margin-top: 20px; text-align: left; max-height: 150px; overflow-y: auto; background: #000; padding: 10px; border-radius: 5px; }
-        .progress-item { margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; }
+        body { background: #0a0a0c; color: white; font-family: sans-serif; padding: 20px; text-align: center; }
+        .card { background: #1a1a1c; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px; }
+        .btn { background: #007AFF; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        #log { background: #000; color: #0f0; padding: 15px; border-radius: 5px; text-align: left; font-size: 12px; height: 200px; overflow-y: auto; margin-top: 20px; border: 1px solid #0f0; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>VEXA V1</h1>
-    <p>Se não funcionar agora, o console nos dirá o porquê.</p>
-
+<div style="max-width: 500px; margin: 0 auto;">
+    <h1>VEXA LIGHT</h1>
     <div class="card">
-        <label>1. Fotos (JPG/PNG)</label>
-        <input type="file" id="files-img" multiple>
-        
-        <label>2. Áudios (MP3)</label>
-        <input type="file" id="files-aud" multiple>
+        <input type="file" id="f-img" multiple accept="image/*" style="margin-bottom:10px;">
+        <input type="file" id="f-aud" multiple accept="audio/*">
     </div>
-
-    <button id="btn-run" class="btn">GERAR VÍDEOS</button>
-    
-    <div id="status-list"></div>
-    <div id="log">Console de Log: Aguardando...</div>
+    <button id="run" class="btn">INICIAR PROCESSAMENTO</button>
+    <div id="log">Aguardando arquivos...</div>
 </div>
 
 <script>
     const { createFFmpeg, fetchFile } = FFmpeg;
-    
-    // Inicialização Simples (Sem multithreading para garantir compatibilidade)
     const ffmpeg = createFFmpeg({ log: true });
+    let imgs = {}, auds = {}, results = [];
 
-    let imgData = {}, audData = {}, results = [];
-
-    // Função para escrever no log da tela
-    function writeLog(msg) {
-        const logDiv = document.getElementById('log');
-        logDiv.innerHTML += `<br>> ${msg}`;
-        logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
-    document.getElementById('files-img').onchange = e => {
-        for(let f of e.target.files) imgData[f.name.split('.')[0]] = f;
-        writeLog(`Fotos carregadas: ${e.target.files.length}`);
+    const log = (m) => {
+        const d = document.getElementById('log');
+        d.innerHTML += `<div>> ${m}</div>`;
+        d.scrollTop = d.scrollHeight;
     };
 
-    document.getElementById('files-aud').onchange = e => {
-        for(let f of e.target.files) audData[f.name.split('.')[0]] = f;
-        writeLog(`Áudios carregados: ${e.target.files.length}`);
-    };
+    document.getElementById('f-img').onchange = e => { for(let f of e.target.files) imgs[f.name.split('.')[0]] = f; log("Fotos OK"); };
+    document.getElementById('f-aud').onchange = e => { for(let f of e.target.files) auds[f.name.split('.')[0]] = f; log("Áudios OK"); };
 
-    document.getElementById('btn-run').onclick = async () => {
-        const btn = document.getElementById('btn-run');
+    document.getElementById('run').onclick = async () => {
+        const btn = document.getElementById('run');
         btn.disabled = true;
         
         try {
             if (!ffmpeg.isLoaded()) {
-                writeLog("Carregando motor FFmpeg...");
+                log("Iniciando Motor (Isso pode demorar)...");
                 await ffmpeg.load();
             }
 
-            const pairs = Object.keys(audData).filter(name => imgData[name]);
-            writeLog(`Pares encontrados: ${pairs.length}`);
+            const pairs = Object.keys(auds).filter(n => imgs[n]);
+            log(`Total para processar: ${pairs.length}`);
 
-            for (let name of pairs) {
-                writeLog(`Processando: ${name}...`);
+            for (let n of pairs) {
+                log(`Processando: ${n}...`);
                 
-                // Limpar e Carregar arquivos na memória virtual
-                ffmpeg.FS('writeFile', 'pic.png', await fetchFile(imgData[name]));
-                ffmpeg.FS('writeFile', 'sound.mp3', await fetchFile(audData[name]));
+                // Grava arquivos
+                ffmpeg.FS('writeFile', 'i.png', await fetchFile(imgs[n]));
+                ffmpeg.FS('writeFile', 'i.mp3', await fetchFile(auds[n]));
 
-                // COMANDO DE SEGURANÇA:
-                // -vf scale: Garante que a imagem tenha dimensões pares (essencial)
-                // -shortest: Para o vídeo quando o áudio acaba
+                // Executa com configurações de baixo consumo
                 await ffmpeg.run(
                     '-loop', '1',
-                    '-i', 'pic.png',
-                    '-i', 'sound.mp3',
+                    '-i', 'i.png',
+                    '-i', 'i.mp3',
                     '-c:v', 'libx264',
-                    '-tune', 'stillimage',
                     '-preset', 'ultrafast',
-                    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', 
-                    '-pix_fmt', 'yuv420p',
+                    '-tune', 'stillimage',
+                    '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p',
                     '-c:a', 'aac',
+                    '-b:a', '96k', 
                     '-shortest',
-                    'out.mp4'
+                    'o.mp4'
                 );
 
-                const data = ffmpeg.FS('readFile', 'out.mp4');
-                results.push({ name: `${name}.mp4`, data });
-                writeLog(`✅ ${name} concluído!`);
+                results.push({ n: `${n}.mp4`, d: ffmpeg.FS('readFile', 'o.mp4') });
+                
+                // LIMPEZA CRÍTICA: Libera memória após cada vídeo
+                ffmpeg.FS('unlink', 'i.png');
+                ffmpeg.FS('unlink', 'i.mp3');
+                ffmpeg.FS('unlink', 'o.mp4');
+                
+                log(`✅ Concluído: ${n}`);
             }
 
-            writeLog("Finalizando pacote ZIP...");
+            log("Gerando arquivo final...");
             const zip = new JSZip();
-            results.forEach(r => zip.file(r.name, r.data.buffer));
+            results.forEach(r => zip.file(r.n, r.d.buffer));
             const blob = await zip.generateAsync({type:"blob"});
-            const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
-            a.href = url;
-            a.download = "videos_vexa.zip";
+            a.href = URL.createObjectURL(blob);
+            a.download = "vexa_batch.zip";
             a.click();
-            writeLog("🚀 Download iniciado!");
+            log("🚀 Download enviado!");
 
-        } catch (e) {
-            writeLog(`❌ ERRO CRÍTICO: ${e.message}`);
-            console.error(e);
+        } catch (err) {
+            log(`ERRO DE MEMÓRIA: Tente processar menos arquivos ou fechar outras abas.`);
+            console.error(err);
         } finally {
             btn.disabled = false;
         }
     };
 </script>
-
 </body>
 </html>
