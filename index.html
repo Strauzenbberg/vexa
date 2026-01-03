@@ -3,260 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXA // Image Converter Elite</title>
+    <title>VEXA VID // Elite Edition</title>
     <style>
-        /* Estética VEXA Premium - Mobile First */
-        :root { 
-            --primary: #007AFF; 
-            --bg: #0a0a0b; 
-            --card: #121214; 
-            --border: #1c1c1e;
-            --text: #ffffff; 
-            --text-dim: #8e8e93;
-            --whatsapp: #25d366;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        /* Cabeçalho */
-        header { text-align: center; margin-bottom: 40px; }
-        h1 { font-size: 48px; font-weight: 700; letter-spacing: -2px; margin-bottom: 10px; }
-        .sub-header { color: var(--text-dim); font-size: 16px; line-height: 1.4; max-width: 320px; margin: 0 auto; }
-
-        /* Container de Uploads */
-        .upload-section { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
-
-        .drop-zone {
-            background: var(--card);
-            border: 1px dashed #2c2c2e;
-            border-radius: 20px;
-            padding: 35px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .drop-zone:active { transform: scale(0.98); }
-        .drop-zone.active { border-color: var(--primary); background: rgba(0, 122, 255, 0.05); }
-
-        .drop-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; }
-        .drop-zone p { font-size: 13px; color: var(--text-dim); }
-
-        /* Estilo da área de Áudio (Visual apenas por enquanto) */
-        .drop-zone.audio-zone { border: 1px dashed rgba(0, 122, 255, 0.3); }
-
-        /* Card de Apoio */
-        .support-card {
-            width: 100%;
-            max-width: 400px;
-            background: var(--card);
-            border-radius: 28px;
-            padding: 40px 30px;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .support-card h2 { font-size: 24px; font-weight: 700; margin-bottom: 15px; }
-        .support-card p { font-size: 14px; color: var(--text-dim); margin-bottom: 25px; line-height: 1.5; }
-
-        /* Botões */
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 18px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 15px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-pix { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(0, 122, 255, 0.2); }
-        .btn-pix:hover { transform: translateY(-2px); filter: brightness(1.1); }
-
-        .btn-share { 
-            background: var(--whatsapp); 
-            color: white; 
-            position: fixed; 
-            bottom: 30px; 
-            right: 20px; 
-            width: auto; 
-            padding: 14px 24px; 
-            border-radius: 100px;
-            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
-            z-index: 100;
-        }
-
-        #btn-run { background: #fff; color: #000; margin-top: 10px; border: 1px solid #fff; }
-        #btn-run:disabled { background: #2c2c2e; border-color: #2c2c2e; color: #555; }
-
-        /* Terminal Log */
-        #log {
-            width: 100%;
-            max-width: 400px;
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            font-size: 11px;
-            color: #00ff00;
-            background: #000;
-            padding: 15px;
-            border-radius: 16px;
-            margin-top: 20px;
-            height: 120px;
-            overflow-y: auto;
-            border: 1px solid #1c1c1e;
-            text-align: left;
-        }
-
-        input[type="file"], canvas { display: none; }
+        :root { --primary: #007AFF; --bg: #050505; --card: rgba(20, 20, 20, 0.85); --border: rgba(255, 255, 255, 0.08); }
+        body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 50%, #151515 0%, #050505 100%); color: #fff; font-family: 'Inter', sans-serif; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .corner-btn { position: fixed; padding: 14px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 50px; color: #fff; font-size: 13px; font-weight: 600; backdrop-filter: blur(15px); transition: 0.4s; cursor: pointer; z-index: 100; }
+        .corner-btn:hover { transform: scale(1.08); background: var(--primary); }
+        #share-btn { bottom: 30px; left: 30px; }
+        #pix-btn { bottom: 30px; right: 30px; }
+        .main-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid var(--border); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; box-shadow: 0 50px 100px rgba(0,0,0,0.9); }
+        h1 { font-size: 38px; font-weight: 900; margin: 0; background: linear-gradient(180deg, #fff 0%, #777 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #555; font-size: 14px; margin: 10px 0 30px; }
+        .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .drop-zone { border: 1px solid #222; background: rgba(255,255,255,0.01); border-radius: 20px; padding: 30px 10px; cursor: pointer; transition: 0.3s; }
+        .drop-zone:hover { border-color: var(--primary); }
+        #btn-run { background: var(--primary); color: #fff; border: none; padding: 20px; width: 100%; border-radius: 18px; font-weight: 800; font-size: 16px; cursor: pointer; }
+        #btn-run:disabled { background: #222; color: #444; }
+        #log { margin-top: 25px; background: rgba(0,0,0,0.5); border-radius: 15px; padding: 15px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; text-align: left; color: #777; border: 1px solid #1a1a1a; }
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>VEXA</h1>
-    <p class="sub-header">Conversão de áudio e imagem em vídeo. Processamento local, privacidade total.</p>
-</header>
+    <button id="share-btn" class="corner-btn" onclick="shareVexa()">Compartilhe o VEXA VID</button>
+    <button id="pix-btn" class="corner-btn" onclick="copyPix()">Apoie o projeto (PIX)</button>
 
-<div class="upload-section">
-    <div class="drop-zone" id="drop-zone">
-        <h3>1. IMAGENS (.JPG, .PNG, .JPEG)</h3>
-        <p>Arraste fotos ou clique para selecionar</p>
+    <div class="main-card">
+        <h1>VEXA <span style="color: var(--primary);">VID</span></h1>
+        <div class="subtitle">Engine Nativa // Renderizador de Vídeo</div>
+
+        <div class="drop-grid">
+            <div class="drop-zone" onclick="document.getElementById('f-img').click()">
+                <p>IMAGENS</p>
+                <input type="file" id="f-img" style="display:none" multiple accept="image/*">
+            </div>
+            <div class="drop-zone" onclick="document.getElementById('f-aud').click()">
+                <p>ÁUDIOS</p>
+                <input type="file" id="f-aud" style="display:none" multiple accept="audio/*">
+            </div>
+        </div>
+
+        <button id="btn-run">CONVERTER PARA WEBM / MP4</button>
+        <div id="log">> Sistema pronto.</div>
     </div>
-    
-    <div class="drop-zone audio-zone" onclick="writeLog('Módulo de áudio em desenvolvimento...')">
-        <h3>2. ÁUDIOS (.MP3, .WAV)</h3>
-        <p>Arraste áudios ou clique para selecionar</p>
-    </div>
-    
-    <input type="file" id="f-img" multiple accept="image/png, image/jpeg, image/jpg">
-    
-    <button id="btn-run" class="btn">CONVERTER PARA WEBP</button>
 
-    <div id="log">> Aguardando arquivos no sistema...</div>
-</div>
+    <canvas id="canvas" width="1280" height="720"></canvas>
 
-<div class="support-card">
-    <h2>Apoie o Projeto</h2>
-    <p>Economizou seu tempo e recursos? Contribua para mantermos esta ferramenta gratuita e sem anúncios.</p>
-    
-    <button class="btn btn-pix" onclick="copyPix()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Copiar chave PIX
-    </button>
-</div>
+    <script>
+        const logDiv = document.getElementById('log');
+        const btn = document.getElementById('btn-run');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-<button class="btn btn-share" onclick="shareVexa()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    Compartilhar
-</button>
+        const writeLog = (msg) => {
+            logDiv.innerHTML += `<div>> ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
 
-<canvas id="canvas"></canvas>
+        btn.onclick = async () => {
+            const imgFiles = document.getElementById('f-img').files;
+            const audFiles = document.getElementById('f-aud').files;
 
-<script>
-    /**
-     * VEXA IMG Core Logic
-     * Mantida e adaptada para a nova UI
-     */
-    const logDiv = document.getElementById('log');
-    const btn = document.getElementById('btn-run');
-    const fileInput = document.getElementById('f-img');
-    const dropZone = document.getElementById('drop-zone');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+            const imgs = {}; const auds = {};
+            for (let f of imgFiles) imgs[f.name.substring(0, f.name.lastIndexOf('.'))] = f;
+            for (let f of audFiles) auds[f.name.substring(0, f.name.lastIndexOf('.'))] = f;
 
-    const pixKey = "153d672d-9acb-4fc9-90b9-42ad3a097709";
+            const pairs = Object.keys(auds).filter(n => imgs[n]);
+            if (pairs.length === 0) return alert("Nenhum par correspondente!");
 
-    const writeLog = (msg) => { 
-        logDiv.innerHTML += `<div>> ${msg}</div>`; 
-        logDiv.scrollTop = logDiv.scrollHeight; 
-    };
-
-    // Gestão de Drag & Drop
-    dropZone.onclick = () => fileInput.click();
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('active'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('active');
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('active');
-        fileInput.files = e.dataTransfer.files;
-        writeLog(`${fileInput.files.length} IMAGENS CARREGADAS`);
-    };
-
-    fileInput.onchange = () => {
-        if(fileInput.files.length > 0) writeLog(`${fileInput.files.length} ARQUIVOS NA FILA`);
-    };
-
-    function copyPix() {
-        navigator.clipboard.writeText(pixKey);
-        writeLog("CHAVE PIX COPIADA!");
-        const pixBtn = document.querySelector('.btn-pix');
-        const oldText = pixBtn.innerHTML;
-        pixBtn.innerHTML = "✅ Chave Copiada!";
-        setTimeout(() => pixBtn.innerHTML = oldText, 2500);
-    }
-
-    function shareVexa() {
-        const text = "Olha que massa esse conversor WebP local e privado!";
-        const url = window.location.href;
-        window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, '_blank');
-    }
-
-    // Processamento de Imagens (WebP)
-    btn.onclick = async () => {
-        const files = fileInput.files;
-        if (files.length === 0) return alert("Por favor, selecione as imagens primeiro!");
-
-        btn.disabled = true;
-        btn.innerText = "CONVERTENDO...";
-        writeLog(`INICIANDO PROCESSAMENTO...`);
-
-        for (let file of files) {
-            try {
-                const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
-                const img = new Image();
-                img.src = URL.createObjectURL(file);
-
-                await new Promise((resolve) => {
-                    img.onload = () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-
-                        canvas.toBlob((blob) => {
-                            const a = document.createElement('a');
-                            a.href = URL.createObjectURL(blob);
-                            a.download = `${nameWithoutExt}.webp`;
-                            a.click();
-                            URL.revokeObjectURL(img.src);
-                            writeLog(`SUCESSO: ${nameWithoutExt}.webp`);
-                            resolve();
-                        }, 'image/webp', 0.9);
-                    };
-                });
-            } catch (err) {
-                writeLog(`ERRO: ${file.name}`);
+            btn.disabled = true;
+            for (let name of pairs) {
+                writeLog(`Processando Vídeo: ${name}...`);
+                await processVideo(imgs[name], auds[name], name);
             }
+            writeLog("✨ Produção Concluída!");
+            btn.disabled = false;
+        };
+
+        async function processVideo(imgFile, audFile, fileName) {
+            return new Promise(async (resolve) => {
+                const audio = new Audio(URL.createObjectURL(audFile));
+                const img = new Image();
+                img.src = URL.createObjectURL(imgFile);
+
+                await new Promise(r => img.onload = r);
+
+                let active = true;
+                function draw() {
+                    if (!active) return;
+                    ctx.drawImage(img, 0, 0, 1280, 720);
+                    requestAnimationFrame(draw);
+                }
+                draw();
+
+                const stream = canvas.captureStream(30);
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(audio);
+                const dest = audioCtx.createMediaStreamDestination();
+                source.connect(dest); source.connect(audioCtx.destination);
+
+                const combined = new MediaStream([...stream.getTracks(), ...dest.stream.getAudioTracks()]);
+                
+                let mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+                if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm; codecs=vp9';
+
+                const recorder = new MediaRecorder(combined, { mimeType, bitsPerSecond: 8000000 });
+                const chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                
+                recorder.onstop = () => {
+                    active = false;
+                    const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    const blob = new Blob(chunks, { type: mimeType });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${fileName}.${extension}`;
+                    a.click();
+                    audioCtx.close();
+                    writeLog(`✅ Vídeo ${extension.toUpperCase()} gerado.`);
+                    resolve();
+                };
+
+                recorder.start();
+                audio.play();
+                audio.onended = () => recorder.stop();
+            });
         }
 
-        writeLog("✨ TAREFAS CONCLUÍDAS!");
-        btn.disabled = false;
-        btn.innerText = "CONVERTER PARA WEBP";
-    };
-</script>
+        function copyPix() {
+            const pix = "153d672d-9acb-4fc9-90b9-42ad3a097709";
+            navigator.clipboard.writeText(pix).then(() => {
+                const el = document.getElementById('pix-btn');
+                el.innerText = "✅ COPIADO!";
+                setTimeout(() => el.innerText = "Apoie o projeto (PIX)", 2000);
+            });
+        }
+
+        function shareVexa() {
+            if (navigator.share) navigator.share({ title: 'VEXA VID', url: window.location.href });
+        }
+    </script>
 </body>
 </html>
