@@ -25,7 +25,7 @@
 </head>
 <body>
 
-    <button id="share-btn" class="corner-btn" onclick="shareVexa()">Compartilhe o VEXA VID</button>
+    <button id="share-btn" class="corner-btn" onclick="shareVexa()">Compartilhe no WhatsApp</button>
     <button id="pix-btn" class="corner-btn" onclick="copyPix()">Apoie o projeto (PIX)</button>
 
     <div class="main-card">
@@ -140,7 +140,22 @@
         }
 
         function shareVexa() {
-            if (navigator.share) navigator.share({ title: 'VEXA VID', url: window.location.href });
+            const text = "Olha que massa esse projeto VEXA VID para converter áudio e imagem em vídeo rapidamente: ";
+            const url = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'VEXA VID',
+                    text: text,
+                    url: url
+                }).catch(() => {
+                    // Fallback se o compartilhamento nativo falhar
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + url)}`, '_blank');
+                });
+            } else {
+                // Fallback para navegadores sem suporte
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + url)}`, '_blank');
+            }
         }
     </script>
 </body>
