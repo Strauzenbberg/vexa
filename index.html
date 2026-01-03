@@ -2,30 +2,32 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>VEXA // Strauz V5</title>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
-    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.umd.js"></script>
+    <title>VEXA // Strauz V6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
         .box { border: 2px solid #333; padding: 20px; display: inline-block; border-radius: 10px; background: #111; }
         input { display: block; margin: 10px auto; }
-        #btn-run { background: #007AFF; color: #fff; border: none; padding: 15px 40px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        #btn-run { background: #007AFF; color: #fff; border: none; padding: 15px 40px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         #log { margin-top: 20px; color: #0f0; font-family: monospace; text-align: left; background: #000; padding: 15px; border: 1px solid #222; height: 180px; overflow-y: auto; width: 380px; margin: 20px auto; font-size: 11px; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>VEXA <span style="color:#007AFF">V5</span></h2>
+    <h2>VEXA <span style="color:#007AFF">V6</span></h2>
     <input type="file" id="f-img" multiple accept="image/*">
     <input type="file" id="f-aud" multiple accept="audio/*">
     <button id="btn-run">PRODUZIR AGORA</button>
 </div>
 
-<div id="log">Console: Aguardando...</div>
+<div id="log">Console: Aguardando interação...</div>
 
-<script>
+<script type="module">
+    // IMPORTAÇÃO DIRETA (Resolve o erro de 'undefined')
+    import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js';
+    import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
     const logDiv = document.getElementById('log');
     function writeLog(msg) {
         logDiv.innerHTML += `<div>> ${msg}</div>`;
@@ -46,58 +48,47 @@
     };
 
     document.getElementById('btn-run').onclick = async () => {
-        writeLog("Iniciando processo...");
+        writeLog("Iniciando...");
         
         try {
             if (!ffmpeg) {
-                // AJUSTE CRÍTICO: Tentando as duas formas de instanciar o FFmpeg
-                writeLog("Localizando construtor...");
-                const FFmpegConstructor = window.FFmpeg.FFmpeg || window.FFmpeg; 
+                writeLog("Instanciando FFmpeg via ESM...");
+                ffmpeg = new FFmpeg();
                 
-                if (typeof FFmpegConstructor !== 'function') {
-                    throw new Error("Não foi possível encontrar o construtor FFmpeg na biblioteca carregada.");
-                }
-
-                ffmpeg = new FFmpegConstructor();
-                writeLog("Motor instanciado. Carregando arquivos core...");
-
-                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
                 await ffmpeg.load({
-                    coreURL: await window.FFmpegUtil.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await window.FFmpegUtil.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
                 });
-                writeLog("Motor pronto para uso!");
+                writeLog("Motor carregado com sucesso!");
             }
 
             const pairs = Object.keys(auds).filter(n => imgs[n]);
             for (const n of pairs) {
                 writeLog(`Processando: ${n}`);
                 
-                // Grava arquivos na memória virtual
-                await ffmpeg.writeFile('input_img', await window.FFmpegUtil.fetchFile(imgs[n]));
-                await ffmpeg.writeFile('input_aud', await window.FFmpegUtil.fetchFile(auds[n]));
+                await ffmpeg.writeFile('in_img', await fetchFile(imgs[n]));
+                await ffmpeg.writeFile('in_aud', await fetchFile(auds[n]));
 
-                // Execução do comando
                 await ffmpeg.exec([
-                    '-loop', '1', '-i', 'input_img', '-i', 'input_aud',
+                    '-loop', '1', '-i', 'in_img', '-i', 'in_aud',
                     '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'stillimage',
                     '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p',
-                    '-c:a', 'aac', '-shortest', 'output.mp4'
+                    '-c:a', 'aac', '-shortest', 'out.mp4'
                 ]);
 
-                const data = await ffmpeg.readFile('output.mp4');
+                const data = await ffmpeg.readFile('out.mp4');
                 results.push({ name: n + ".mp4", data: data });
                 
-                // Limpeza para evitar erro de memória (O seu gargalo anterior)
-                await ffmpeg.deleteFile('input_img');
-                await ffmpeg.deleteFile('input_aud');
-                await ffmpeg.deleteFile('output.mp4');
+                await ffmpeg.deleteFile('in_img');
+                await ffmpeg.deleteFile('in_aud');
+                await ffmpeg.deleteFile('out.mp4');
                 
-                writeLog(`✅ ${n} Finalizado.`);
+                writeLog(`✅ ${n} Pronto!`);
             }
 
             if (results.length > 0) {
-                writeLog("Criando ZIP...");
+                writeLog("Zipando arquivos...");
                 const zip = new JSZip();
                 results.forEach(r => zip.file(r.name, r.data));
                 const content = await zip.generateAsync({type:"blob"});
@@ -105,7 +96,7 @@
                 a.href = URL.createObjectURL(content);
                 a.download = "vexa_pack.zip";
                 a.click();
-                writeLog("🚀 Download iniciado!");
+                writeLog("🚀 Sucesso!");
             }
 
         } catch (err) {
