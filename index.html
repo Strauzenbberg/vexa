@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>VEXA // Strauz V6</title>
+    <title>VEXA // Strauz V7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
@@ -15,16 +15,15 @@
 <body>
 
 <div class="box">
-    <h2>VEXA <span style="color:#007AFF">V6</span></h2>
+    <h2>VEXA <span style="color:#007AFF">V7</span></h2>
     <input type="file" id="f-img" multiple accept="image/*">
     <input type="file" id="f-aud" multiple accept="audio/*">
     <button id="btn-run">PRODUZIR AGORA</button>
 </div>
 
-<div id="log">Console: Aguardando interação...</div>
+<div id="log">Console: Aguardando...</div>
 
 <script type="module">
-    // IMPORTAÇÃO DIRETA (Resolve o erro de 'undefined')
     import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js';
     import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
 
@@ -39,12 +38,12 @@
 
     document.getElementById('f-img').onchange = e => { 
         for(let f of e.target.files) imgs[f.name.split('.')[0]] = f;
-        writeLog(`${e.target.files.length} imagens carregadas.`);
+        writeLog("Imagens carregadas.");
     };
 
     document.getElementById('f-aud').onchange = e => { 
         for(let f of e.target.files) auds[f.name.split('.')[0]] = f;
-        writeLog(`${e.target.files.length} áudios carregados.`);
+        writeLog("Áudios carregados.");
     };
 
     document.getElementById('btn-run').onclick = async () => {
@@ -52,14 +51,19 @@
         
         try {
             if (!ffmpeg) {
-                writeLog("Instanciando FFmpeg via ESM...");
+                writeLog("Instanciando motor (Blob Mode)...");
                 ffmpeg = new FFmpeg();
-                
+
+                // FIX DE SEGURANÇA PARA GITHUB PAGES
                 const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+                
                 await ffmpeg.load({
                     coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
                     wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    // Isso força o Worker a ser carregado localmente, evitando o erro de Origin
+                    workerURL: await toBlobURL(`https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/esm/worker.js`, 'text/javascript'),
                 });
+                
                 writeLog("Motor carregado com sucesso!");
             }
 
@@ -67,11 +71,11 @@
             for (const n of pairs) {
                 writeLog(`Processando: ${n}`);
                 
-                await ffmpeg.writeFile('in_img', await fetchFile(imgs[n]));
-                await ffmpeg.writeFile('in_aud', await fetchFile(auds[n]));
+                await ffmpeg.writeFile('i_img', await fetchFile(imgs[n]));
+                await ffmpeg.writeFile('i_aud', await fetchFile(auds[n]));
 
                 await ffmpeg.exec([
-                    '-loop', '1', '-i', 'in_img', '-i', 'in_aud',
+                    '-loop', '1', '-i', 'i_img', '-i', 'i_aud',
                     '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'stillimage',
                     '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p',
                     '-c:a', 'aac', '-shortest', 'out.mp4'
@@ -80,15 +84,15 @@
                 const data = await ffmpeg.readFile('out.mp4');
                 results.push({ name: n + ".mp4", data: data });
                 
-                await ffmpeg.deleteFile('in_img');
-                await ffmpeg.deleteFile('in_aud');
+                await ffmpeg.deleteFile('i_img');
+                await ffmpeg.deleteFile('i_aud');
                 await ffmpeg.deleteFile('out.mp4');
                 
                 writeLog(`✅ ${n} Pronto!`);
             }
 
             if (results.length > 0) {
-                writeLog("Zipando arquivos...");
+                writeLog("Gerando ZIP...");
                 const zip = new JSZip();
                 results.forEach(r => zip.file(r.name, r.data));
                 const content = await zip.generateAsync({type:"blob"});
@@ -96,7 +100,7 @@
                 a.href = URL.createObjectURL(content);
                 a.download = "vexa_pack.zip";
                 a.click();
-                writeLog("🚀 Sucesso!");
+                writeLog("🚀 Sucesso total!");
             }
 
         } catch (err) {
