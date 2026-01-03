@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXA // Transformação de Mídia Ultra-Rápida</title>
+    <title>VEXA // Turbo Engine 720p</title>
+    
+    <script src="coi-serviceworker.js"></script>
     
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -27,31 +29,17 @@
             color: var(--primary);
             font-family: var(--font-main);
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 80px 20px;
+            padding: 60px 20px;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        header h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            letter-spacing: -2px;
-            margin-bottom: 10px;
-        }
-
-        header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
+        header { text-align: center; margin-bottom: 50px; }
+        header h1 { font-size: 3rem; letter-spacing: -2px; margin-bottom: 10px; }
+        header p { color: var(--text-secondary); }
 
         .upload-grid {
             display: grid;
@@ -66,56 +54,39 @@
             border-radius: 16px;
             padding: 40px;
             text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            transition: 0.3s;
             position: relative;
-        }
-
-        .drop-zone:hover {
-            border-color: var(--accent);
-            background: rgba(0, 122, 255, 0.02);
-        }
-
-        .drop-zone input {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
             cursor: pointer;
         }
 
-        .drop-zone h3 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .drop-zone p { color: var(--text-secondary); font-size: 0.8rem; }
+        .drop-zone:hover { border-color: var(--accent); background: rgba(0, 122, 255, 0.05); }
+        .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
         #render-queue {
             background: var(--card-bg);
             border-radius: 20px;
             border: 1px solid var(--border);
-            padding: 30px;
+            padding: 25px;
             margin-bottom: 40px;
-            display: none; 
+            display: none;
         }
 
         .queue-item {
             display: flex;
             align-items: center;
-            padding: 15px 0;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border);
         }
 
-        .queue-item:last-child { border-bottom: none; }
-
-        .item-info { flex: 1; }
-        .item-name { font-size: 0.9rem; font-weight: 500; }
-        
         .progress-wrapper {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-left: 20px;
+            gap: 12px;
+            margin-left: auto;
         }
 
         .progress-container {
-            width: 150px;
+            width: 120px;
             height: 4px;
             background: rgba(255,255,255,0.1);
             border-radius: 2px;
@@ -126,285 +97,159 @@
             height: 100%;
             background: var(--accent);
             width: 0%;
-            transition: width 0.1s linear;
+            transition: width 0.2s ease;
         }
 
-        .percentage-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--accent);
-            min-width: 35px;
-            text-align: right;
-        }
+        .percentage-label { font-size: 0.75rem; color: var(--accent); min-width: 35px; }
 
         .btn-primary {
             background: var(--primary);
-            color: black;
+            color: #000;
             border: none;
-            padding: 18px 40px;
+            padding: 18px;
             border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
+            font-weight: 700;
             width: 100%;
-            font-size: 1rem;
-            transition: transform 0.2s ease;
-        }
-
-        .btn-primary:hover { transform: scale(1.01); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .donation-card {
-            margin-top: 60px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 40px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .donation-card h2 { margin-bottom: 15px; font-weight: 600; }
-        
-        .pix-btn, .whatsapp-float {
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 14px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            font-family: var(--font-main);
+            transition: 0.2s;
         }
 
-        .pix-btn {
-            background: var(--accent);
-            margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
-        }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .whatsapp-float {
             position: fixed;
-            right: 30px;
-            bottom: 30px;
-            background-color: var(--whatsapp);
-            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+            right: 25px;
+            bottom: 25px;
+            background: var(--whatsapp);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 100;
-        }
-
-        .pix-btn:hover, .whatsapp-float:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        .whatsapp-float svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        @media (max-width: 768px) {
-            .upload-grid { grid-template-columns: 1fr; }
-            header h1 { font-size: 2.5rem; }
-            .whatsapp-float { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
 
-    <a href="#" class="whatsapp-float" id="wa-share" target="_blank">
-        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-        <span>Compartilhe</span>
-    </a>
+    <a href="#" class="whatsapp-float" id="wa-share" target="_blank">Compartilhar VEXA</a>
 
     <div class="container">
         <header>
             <h1>VEXA</h1>
-            <p>Conversão de áudio e imagem em vídeo. Processamento local, privacidade total.</p>
+            <p>Motor de Renderização em Lote Otimizado (720p Turbo)</p>
         </header>
 
-        <main>
-            <div class="upload-grid">
-                <div class="drop-zone" id="drop-images">
-                    <h3>1. Imagens (.jpg, .png)</h3>
-                    <p>Arraste fotos ou clique para selecionar</p>
-                    <input type="file" id="input-images" multiple accept="image/*">
-                </div>
-                <div class="drop-zone" id="drop-audios">
-                    <h3>2. Áudios (.mp3, .wav)</h3>
-                    <p>Arraste áudios ou clique para selecionar</p>
-                    <input type="file" id="input-audios" multiple accept="audio/*">
-                </div>
+        <div class="upload-grid">
+            <div class="drop-zone">
+                <h3>Imagens</h3>
+                <input type="file" id="input-images" multiple accept="image/*">
             </div>
-
-            <div id="render-queue">
-                <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Fila de Processamento</h3>
-                <div id="queue-list"></div>
-                <button id="btn-start" class="btn-primary" style="margin-top: 30px;" disabled>Iniciar Renderização em Lote</button>
+            <div class="drop-zone">
+                <h3>Áudios</h3>
+                <input type="file" id="input-audios" multiple accept="audio/*">
             </div>
+        </div>
 
-            <div id="download-all-section" style="display: none; margin-top: 20px;">
-                <button id="btn-zip" class="btn-primary" style="background: var(--accent); color: white;">Baixar Todos os Vídeos (.zip)</button>
-            </div>
+        <div id="render-queue">
+            <div id="queue-list"></div>
+            <button id="btn-start" class="btn-primary" style="margin-top: 20px;" disabled>Iniciar Processamento Turbo</button>
+        </div>
 
-            <section class="donation-card">
-                <h2>Apoie o Projeto</h2>
-                <p>Economizou seu tempo e recursos? Contribua para mantermos esta ferramenta gratuita e sem anúncios.</p>
-                <button class="pix-btn" id="pix-copy-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    <span>Copiar chave PIX</span>
-                </button>
-                <p id="copy-status" style="font-size: 0.75rem; color: var(--accent); margin-top: 12px; opacity: 0; font-weight: 600;">Copiado para a área de transferência!</p>
-            </section>
-        </main>
+        <div id="download-section" style="display: none;">
+            <button id="btn-zip" class="btn-primary" style="background: var(--accent); color: #fff;">Baixar Tudo (.zip)</button>
+        </div>
     </div>
 
     <script>
         const { createFFmpeg, fetchFile } = FFmpeg;
-        
         const ffmpeg = createFFmpeg({ 
-            log: true,
-            mainName: 'main',
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            log: true, 
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js' 
         });
-        
-        let images = {};
-        let audios = {};
-        let videoResults = [];
-        let currentProcessingName = "";
 
-        // Captura o progresso em tempo real
+        let images = {}, audios = {}, videoResults = [], currentName = "";
+
+        // Captura Progresso Real do WASM
         ffmpeg.setProgress(({ ratio }) => {
-            if (currentProcessingName) {
-                const percentage = Math.round(ratio * 100);
-                const bar = document.getElementById(`progress-${currentProcessingName}`);
-                const label = document.getElementById(`percent-${currentProcessingName}`);
-                if (bar) bar.style.width = `${percentage}%`;
-                if (label) label.innerText = `${percentage}%`;
+            if (currentName) {
+                const p = Math.round(ratio * 100);
+                document.getElementById(`progress-${currentName}`).style.width = p + '%';
+                document.getElementById(`percent-${currentName}`).innerText = p + '%';
             }
         });
 
-        // Lógica do WhatsApp
-        const currentUrl = window.location.href;
-        const shareMsg = encodeURIComponent(`💡 Olha essa ferramenta que o Nil me mandou! Ela cria vídeos para o YouTube direto no navegador, sem precisar instalar nada e de graça: ${currentUrl}`);
-        document.getElementById('wa-share').href = `https://api.whatsapp.com/send?text=${shareMsg}`;
-
-        // Efeito Parallax
-        window.addEventListener('scroll', () => {
-            const btn = document.getElementById('wa-share');
-            const scroll = window.pageYOffset;
-            btn.style.transform = `translateY(${scroll * 0.05}px)`;
-        });
+        // Previne fechar a aba acidentalmente
+        window.onbeforeunload = () => (currentName ? "Processamento em curso. Sair agora cancelará tudo." : null);
 
         document.getElementById('input-images').addEventListener('change', (e) => handleFiles(e.target.files, 'img'));
         document.getElementById('input-audios').addEventListener('change', (e) => handleFiles(e.target.files, 'audio'));
 
-        function handleFiles(fileList, type) {
-            for (let file of fileList) {
-                const nameWithoutExt = file.name.split('.').slice(0, -1).join('.');
-                if (type === 'img') images[nameWithoutExt] = file;
-                else audios[nameWithoutExt] = file;
+        function handleFiles(files, type) {
+            for (let f of files) {
+                const n = f.name.split('.').slice(0, -1).join('.');
+                type === 'img' ? images[n] = f : audios[n] = f;
             }
             updateQueue();
         }
 
         function updateQueue() {
-            const queueList = document.getElementById('queue-list');
-            const renderQueue = document.getElementById('render-queue');
-            const btnStart = document.getElementById('btn-start');
-            queueList.innerHTML = '';
-            const pairs = Object.keys(audios).filter(name => images[name]);
-            if (pairs.length > 0) {
-                renderQueue.style.display = 'block';
-                btnStart.disabled = false;
-            }
-            pairs.forEach(name => {
-                const item = document.createElement('div');
-                item.className = 'queue-item';
-                item.innerHTML = `
-                    <div class="item-info">
-                        <div class="item-name">${name}.mp4</div>
-                    </div>
+            const list = document.getElementById('queue-list');
+            const pairs = Object.keys(audios).filter(n => images[n]);
+            list.innerHTML = pairs.map(n => `
+                <div class="queue-item">
+                    <span>${n}.mp4</span>
                     <div class="progress-wrapper">
-                        <div class="progress-container">
-                            <div class="progress-bar" id="progress-${name}"></div>
-                        </div>
-                        <div class="percentage-label" id="percent-${name}">0%</div>
-                    </div>`;
-                queueList.appendChild(item);
-            });
+                        <div class="progress-container"><div class="progress-bar" id="progress-${n}"></div></div>
+                        <span class="percentage-label" id="percent-${n}">0%</span>
+                    </div>
+                </div>`).join('');
+            document.getElementById('render-queue').style.display = pairs.length ? 'block' : 'none';
+            document.getElementById('btn-start').disabled = !pairs.length;
         }
 
         document.getElementById('btn-start').addEventListener('click', async () => {
             const btn = document.getElementById('btn-start');
             btn.disabled = true;
-            btn.innerText = "Processando com Turbo Ativado...";
+            btn.innerText = "🚀 Renderizando...";
 
             if (!ffmpeg.isLoaded()) await ffmpeg.load();
 
-            const pairs = Object.keys(audios).filter(name => images[name]);
+            const pairs = Object.keys(audios).filter(n => images[n]);
+            for (const n of pairs) {
+                currentName = n;
+                ffmpeg.FS('writeFile', 'i_img', await fetchFile(images[n]));
+                ffmpeg.FS('writeFile', 'i_aud', await fetchFile(audios[n]));
 
-            for (const name of pairs) {
-                currentProcessingName = name;
-                
-                ffmpeg.FS('writeFile', 'input_img', await fetchFile(images[name]));
-                ffmpeg.FS('writeFile', 'input_audio', await fetchFile(audios[name]));
-
+                // MOTOR TURBO (DIRETRIZES STRAUZ & CLARA)
                 await ffmpeg.run(
-                    '-loop', '1', 
-                    '-i', 'input_img', 
-                    '-i', 'input_audio', 
-                    '-c:v', 'libx264', 
-                    '-preset', 'ultrafast', 
-                    '-tune', 'stillimage', 
-                    '-c:a', 'aac', 
-                    '-b:a', '192k', 
-                    '-pix_fmt', 'yuv420p', 
-                    '-shortest', 
-                    '-threads', '0', 
-                    'output.mp4'
+                    '-loop', '1', '-i', 'i_img', '-i', 'i_aud',
+                    '-c:v', 'libx264', '-preset', 'ultrafast', 
+                    '-tune', 'stillimage', '-vf', 'scale=-2:720',
+                    '-c:a', 'aac', '-b:a', '128k', '-pix_fmt', 'yuv420p',
+                    '-shortest', '-threads', '0', 'out.mp4'
                 );
 
-                const data = ffmpeg.FS('readFile', 'output.mp4');
-                videoResults.push({ name: `${name}.mp4`, data: data });
-                
-                // Força 100% ao concluir
-                document.getElementById(`progress-${name}`).style.width = '100%';
-                document.getElementById(`percent-${name}`).innerText = '100%';
+                videoResults.push({ name: `${n}.mp4`, data: ffmpeg.FS('readFile', 'out.mp4') });
+                document.getElementById(`percent-${n}`).innerText = "OK";
             }
-
-            currentProcessingName = "";
+            currentName = "";
             btn.innerText = "Concluído!";
-            document.getElementById('download-all-section').style.display = 'block';
+            document.getElementById('download-section').style.display = 'block';
         });
 
         document.getElementById('btn-zip').addEventListener('click', async () => {
             const zip = new JSZip();
-            videoResults.forEach(vid => { zip.file(vid.name, vid.data.buffer); });
-            const content = await zip.generateAsync({ type: "blob" });
-            const url = URL.createObjectURL(content);
+            videoResults.forEach(v => zip.file(v.name, v.data.buffer));
+            const blob = await zip.generateAsync({ type: "blob" });
             const a = document.createElement('a');
-            a.href = url;
-            a.download = "vexo_videos_batch.zip";
+            a.href = URL.createObjectURL(blob);
+            a.download = "vexa_pack.zip";
             a.click();
-        });
-
-        document.getElementById('pix-copy-btn').addEventListener('click', function() {
-            const pixKey = "153d672d-9acb-4fc9-90b9-42ad3a097709";
-            navigator.clipboard.writeText(pixKey).then(() => {
-                const status = document.getElementById('copy-status');
-                const btn = this;
-                status.style.opacity = "1";
-                btn.querySelector('span').innerText = "Copiado!";
-                setTimeout(() => { 
-                    status.style.opacity = "0"; 
-                    btn.querySelector('span').innerText = "Copiar chave PIX";
-                }, 3000);
-            });
         });
     </script>
 </body>
