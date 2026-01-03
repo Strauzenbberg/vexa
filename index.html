@@ -3,22 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXA VID // Elite Edition</title>
+    <title>VEXA WebM // Elite Edition</title>
     <style>
         :root { --primary: #007AFF; --bg: #050505; --card: rgba(20, 20, 20, 0.85); --border: rgba(255, 255, 255, 0.08); }
         body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 50%, #151515 0%, #050505 100%); color: #fff; font-family: 'Inter', sans-serif; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        /* Botões Parallax nos Cantos */
         .corner-btn { position: fixed; padding: 14px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 50px; color: #fff; font-size: 13px; font-weight: 600; backdrop-filter: blur(15px); transition: 0.4s; cursor: pointer; z-index: 100; }
         .corner-btn:hover { transform: scale(1.08); background: var(--primary); }
         #share-btn { bottom: 30px; left: 30px; }
         #pix-btn { bottom: 30px; right: 30px; }
-        .main-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid var(--border); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; box-shadow: 0 50px 100px rgba(0,0,0,0.9); }
+        
+        /* Card Central */
+        .main-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid var(--border); padding: 40px; border-radius: 35px; width: 100%; max-width: 480px; text-align: center; box-shadow: 0 50px 100px rgba(0,0,0,0.9); transition: transform 0.1s ease-out; }
         h1 { font-size: 38px; font-weight: 900; margin: 0; background: linear-gradient(180deg, #fff 0%, #777 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .subtitle { color: #555; font-size: 14px; margin: 10px 0 30px; }
+        
+        /* Drop Zones */
         .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
         .drop-zone { border: 1px solid #222; background: rgba(255,255,255,0.01); border-radius: 20px; padding: 30px 10px; cursor: pointer; transition: 0.3s; }
-        .drop-zone:hover { border-color: var(--primary); }
-        #btn-run { background: var(--primary); color: #fff; border: none; padding: 20px; width: 100%; border-radius: 18px; font-weight: 800; font-size: 16px; cursor: pointer; }
-        #btn-run:disabled { background: #222; color: #444; }
+        .drop-zone:hover { border-color: var(--primary); background: rgba(0, 122, 255, 0.05); }
+        
+        /* Botão de Ação */
+        #btn-run { background: var(--primary); color: #fff; border: none; padding: 20px; width: 100%; border-radius: 18px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        #btn-run:disabled { background: #222; color: #444; cursor: not-allowed; }
+        
+        /* Log */
         #log { margin-top: 25px; background: rgba(0,0,0,0.5); border-radius: 15px; padding: 15px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; text-align: left; color: #777; border: 1px solid #1a1a1a; }
         canvas { display: none; }
     </style>
@@ -28,23 +38,23 @@
     <button id="share-btn" class="corner-btn" onclick="shareVexa()">Compartilhe no WhatsApp</button>
     <button id="pix-btn" class="corner-btn" onclick="copyPix()">Apoie o projeto (PIX)</button>
 
-    <div class="main-card">
-        <h1>VEXA <span style="color: var(--primary);">VID</span></h1>
+    <div class="main-card" id="card">
+        <h1>VEXA <span style="color: var(--primary);">WebM</span></h1>
         <div class="subtitle">Engine Nativa // Renderizador de Vídeo</div>
 
         <div class="drop-grid">
             <div class="drop-zone" onclick="document.getElementById('f-img').click()">
-                <p>IMAGENS</p>
+                <p style="margin:0; font-weight:bold; color:#fff">IMAGENS</p>
                 <input type="file" id="f-img" style="display:none" multiple accept="image/*">
             </div>
             <div class="drop-zone" onclick="document.getElementById('f-aud').click()">
-                <p>ÁUDIOS</p>
+                <p style="margin:0; font-weight:bold; color:#fff">ÁUDIOS</p>
                 <input type="file" id="f-aud" style="display:none" multiple accept="audio/*">
             </div>
         </div>
 
         <button id="btn-run">CONVERTER PARA WEBM / MP4</button>
-        <div id="log">> Sistema pronto.</div>
+        <div id="log">> VEXA WebM pronto para iniciar.</div>
     </div>
 
     <canvas id="canvas" width="1280" height="720"></canvas>
@@ -69,14 +79,14 @@
             for (let f of audFiles) auds[f.name.substring(0, f.name.lastIndexOf('.'))] = f;
 
             const pairs = Object.keys(auds).filter(n => imgs[n]);
-            if (pairs.length === 0) return alert("Nenhum par correspondente!");
+            if (pairs.length === 0) return alert("Selecione arquivos com nomes correspondentes!");
 
             btn.disabled = true;
             for (let name of pairs) {
-                writeLog(`Processando Vídeo: ${name}...`);
+                writeLog(`Renderizando: ${name}...`);
                 await processVideo(imgs[name], auds[name], name);
             }
-            writeLog("✨ Produção Concluída!");
+            writeLog("✨ Produção VEXA finalizada!");
             btn.disabled = false;
         };
 
@@ -120,7 +130,7 @@
                     a.download = `${fileName}.${extension}`;
                     a.click();
                     audioCtx.close();
-                    writeLog(`✅ Vídeo ${extension.toUpperCase()} gerado.`);
+                    writeLog(`✅ ${fileName}.${extension.toUpperCase()} gerado.`);
                     resolve();
                 };
 
@@ -134,29 +144,13 @@
             const pix = "153d672d-9acb-4fc9-90b9-42ad3a097709";
             navigator.clipboard.writeText(pix).then(() => {
                 const el = document.getElementById('pix-btn');
-                el.innerText = "✅ COPIADO!";
-                setTimeout(() => el.innerText = "Apoie o projeto (PIX)", 2000);
+                const old = el.innerText;
+                el.innerText = "✅ CHAVE COPIADA!";
+                setTimeout(() => el.innerText = old, 2000);
             });
         }
 
         function shareVexa() {
-            const text = "Olha que massa esse projeto VEXA VID para converter áudio e imagem em vídeo rapidamente: ";
+            const text = "Olha esse projeto VEXA WebM para converter áudio e imagem em vídeo rapidamente: ";
             const url = window.location.href;
-            
             if (navigator.share) {
-                navigator.share({
-                    title: 'VEXA VID',
-                    text: text,
-                    url: url
-                }).catch(() => {
-                    // Fallback se o compartilhamento nativo falhar
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + url)}`, '_blank');
-                });
-            } else {
-                // Fallback para navegadores sem suporte
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + url)}`, '_blank');
-            }
-        }
-    </script>
-</body>
-</html>
